@@ -25,13 +25,14 @@ namespace ReadExcelFiles
         {
             //MotorReportInsert();
             // AgentInsert();
-            CustomerInsert();
+            //CustomerInsert();
 
-            // DbContextOptionsBuilder<AppDBContext> optionsBuilder = new DbContextOptionsBuilder<AppDBContext>();
-            // optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
-            // AppDBContext _dBContext = new AppDBContext(optionsBuilder.Options);
+            DbContextOptionsBuilder<AppDBContext> optionsBuilder = new DbContextOptionsBuilder<AppDBContext>();
+            optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            AppDBContext _dBContext = new AppDBContext(optionsBuilder.Options);
 
-            // new ManageData(_dBContext).ToDBPolicy();
+            //new ManageData(_dBContext).ToDBPolicy();
+            new ManageData(_dBContext).ToDBPremium();
         }
 
         // EF Core uses this method at design time to access the DbContext

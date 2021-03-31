@@ -115,20 +115,80 @@ namespace ReadExcelFiles
             Console.WriteLine($"Count Insert {countInsert} ");
             Console.WriteLine($"Count Update {countUpdated} ");
         }
-        public void ToPremium()
+        public void ToDBPremium()
         {
             var start = DateTime.Now;
             //Declaration
+            var listPremium = new List<Premium>();
             var watch = new Stopwatch();
             //Watch start
             watch.Start();
             Console.WriteLine($"Start : {DateTime.Now}");
 
             //Get Data from Motor DB
-            var tmpList = _context.Motor.ToList();
+            var tmpList = _context.Agent.ToList();
 
             //loop for check data in done list
+            tmpList.ForEach(x =>
+                        {
+                            var motor = _context.Motor.Where(m => m.SaleID.Contains("06272") && m.PolicyType.Trim() == "New Policy").ToList();
 
+                            foreach (var m in motor)
+                            {
+                                var months = MonthDiff(m.StartDateConvert, m.EndDateConvert);
+                                var premium = PremiumCheck(Convert.ToDouble(m.Premium));
+
+                                for (int i = 0; i < months; i++)
+                                {
+                                    var premiumModel = new Premium
+                                    {
+                                        Insurer = null,
+                                        Product = m.ProductGroupDetail,
+                                        Plan = m.ProductDetail,
+                                        Agent = m.SaleID,
+                                        Branch = m.Branch,
+                                        PayerName = null,
+                                        PayerID = null,
+                                        Telephone = null,
+                                        Email = null,
+                                        AddressType = null,
+                                        Province = null,
+                                        District = null,
+                                        Subdistrict = null,
+                                        StreetAddress = null,
+                                        Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
+                                        QuotationNo = null,
+                                        PolicyNo = null,
+                                        PolicyIssueDate = null,
+                                        BillingDate = null,
+                                        CollectionDate = null,
+                                        CoverageDateFrom = null,
+                                        CoverageDateTo = null,
+                                        PremiumType = null,
+                                        PayMode = null,
+                                        PaymentStatus = null,
+                                        FailReasons = null,
+                                        GrossPremium = (premium - (premium * .07)).ToString(),
+                                        VAT = (premium * .07).ToString(),
+                                        StampDuty = null,
+                                        TotalAmount = premium.ToString(),
+                                        BankHolderName = null,
+                                        BankName = null,
+                                        BankNumber = null,
+                                    };
+                                    listPremium.Add(premiumModel);
+                                }
+
+                                var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
+
+                                foreach (var c in customer)
+                                {
+                                    var premiumModel = new Premium();
+                                    //mapster
+                                    customer.Adapt(premiumModel);
+                                }
+                            }
+                        });
 
             watch.Stop();
             var end = DateTime.Now;
@@ -140,6 +200,36 @@ namespace ReadExcelFiles
             Console.WriteLine($"Start : {start}");
             Console.WriteLine($"End : {end}");
             Console.WriteLine($"RunTime : {elapsedTime}");
+        }
+
+        public int MonthDiff(DateTime start, DateTime end)
+        {
+            int m1;
+            int m2;
+            if (start < end)
+            {
+                m1 = (end.Month - start.Month);//for years
+                m2 = (end.Year - start.Year) * 12; //for months
+            }
+            else
+            {
+                m1 = (start.Month - end.Month);//for years
+                m2 = (start.Year - end.Year) * 12; //for months
+            }
+
+            return m1 + m2;
+        }
+
+        public int PremiumCheck(Double premium)
+        {
+            var ListPremium = new List<int>() { 588, 1088 };
+            foreach (var p in ListPremium)
+            {
+                var mod = premium % p;
+                if (mod == 0) return p;
+            }
+
+            return 0;
         }
     }
 }
