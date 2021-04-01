@@ -160,6 +160,7 @@ namespace ReadExcelFiles
                     CancelledDate = dataRow.Field<string>(ds.Tables[0].Columns[72].ColumnName),
                     CancelledReason = dataRow.Field<string>(ds.Tables[0].Columns[73].ColumnName),
 
+                    PolicyStartDateConvert = Convert.ToDateTime(dataRow.Field<string>(ds.Tables[0].Columns[8].ColumnName)),
                     StartDateConvert = Convert.ToDateTime(dataRow.Field<string>(ds.Tables[0].Columns[9].ColumnName)),
                     EndDateConvert = Convert.ToDateTime(dataRow.Field<string>(ds.Tables[0].Columns[10].ColumnName)),
                 }).ToList();
