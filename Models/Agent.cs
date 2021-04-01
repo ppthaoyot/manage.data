@@ -24,6 +24,7 @@ namespace ReadExcelFiles.Models
         public DateTime CollectionDate { get; set; }
         public Double Amount { get; set; }
         public string PayMode { get; set; }
+        public string CollectionStatus { get; set; }
         public string FailureReason { get; set; }
     }
 }

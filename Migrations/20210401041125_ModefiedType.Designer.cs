@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReadExcelFiles.Data;
 
 namespace ReadExcelFiles.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210401041125_ModefiedType")]
+    partial class ModefiedType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -809,7 +811,7 @@ namespace ReadExcelFiles.Migrations
                     b.Property<string>("Plan")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("PolicyIssueDate")
+                    b.Property<DateTime>("PolicyIssueDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PolicyNo")

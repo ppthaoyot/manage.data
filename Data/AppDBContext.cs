@@ -21,5 +21,6 @@ namespace ReadExcelFiles.Data
         public DbSet<DBMotor> DBMotor { get; set; }
         public DbSet<Agent> Agent { get; set; }
         public DbSet<Customer> Customer { get; set; }
+        public DbSet<Premium> Premium { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -25,11 +26,11 @@ namespace ReadExcelFiles.Models
         public string Insuredname { get; set; }
         public string QuotationNo { get; set; }
         public string PolicyNo { get; set; }
-        public string PolicyIssueDate { get; set; }
-        public string BillingDate { get; set; }
-        public string CollectionDate { get; set; }
-        public string CoverageDateFrom { get; set; }
-        public string CoverageDateTo { get; set; }
+        public DateTime? PolicyIssueDate { get; set; }
+        public DateTime BillingDate { get; set; }
+        public DateTime CollectionDate { get; set; }
+        public DateTime CoverageDateFrom { get; set; }
+        public DateTime CoverageDateTo { get; set; }
         public string PremiumType { get; set; }
         public string PayMode { get; set; }
         public string PaymentStatus { get; set; }

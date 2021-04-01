@@ -24,7 +24,7 @@ namespace ReadExcelFiles
         static void Main(string[] args)
         {
             //MotorReportInsert();
-            // AgentInsert();
+            //AgentInsert();
             //CustomerInsert();
 
             DbContextOptionsBuilder<AppDBContext> optionsBuilder = new DbContextOptionsBuilder<AppDBContext>();

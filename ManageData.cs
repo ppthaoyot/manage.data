@@ -120,76 +120,71 @@ namespace ReadExcelFiles
             var start = DateTime.Now;
             //Declaration
             var listPremium = new List<Premium>();
+            var doneList = new List<string>();
+            int count = 0;
             var watch = new Stopwatch();
             //Watch start
             watch.Start();
             Console.WriteLine($"Start : {DateTime.Now}");
 
             //Get Data from Motor DB
-            var tmpList = _context.Agent.ToList();
+            var tmpList = _context.Agent.Take(100).ToList();
 
             //loop for check data in done list
             tmpList.ForEach(x =>
-                        {
-                            var motor = _context.Motor.Where(m => m.SaleID.Contains("06272") && m.PolicyType.Trim() == "New Policy").ToList();
+                       {
+                           //    var checkDone = doneList.Contains(x.AgentCode);
+                           //    if (!checkDone)
+                           //    {
+                           count++;
+                           //from agent
+                           var motor = _context.Motor.Where(m => m.SaleID.Contains(x.AgentCode) && m.PolicyType.Trim() == "New Policy").ToList();
+                           foreach (var m in motor)
+                           {
+                               var coveragePeriods = CoveragePeriod(m.StartDateConvert, m.EndDateConvert);
+                               var premium = PremiumCheck(Convert.ToDouble(m.Premium));
 
-                            foreach (var m in motor)
-                            {
-                                var months = MonthDiff(m.StartDateConvert, m.EndDateConvert);
-                                var premium = PremiumCheck(Convert.ToDouble(m.Premium));
-
-                                for (int i = 0; i < months; i++)
-                                {
-                                    var premiumModel = new Premium
-                                    {
-                                        Insurer = null,
-                                        Product = m.ProductGroupDetail,
-                                        Plan = m.ProductDetail,
-                                        Agent = m.SaleID,
-                                        Branch = m.Branch,
-                                        PayerName = null,
-                                        PayerID = null,
-                                        Telephone = null,
-                                        Email = null,
-                                        AddressType = null,
-                                        Province = null,
-                                        District = null,
-                                        Subdistrict = null,
-                                        StreetAddress = null,
-                                        Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
-                                        QuotationNo = null,
-                                        PolicyNo = null,
-                                        PolicyIssueDate = null,
-                                        BillingDate = null,
-                                        CollectionDate = null,
-                                        CoverageDateFrom = null,
-                                        CoverageDateTo = null,
-                                        PremiumType = null,
-                                        PayMode = null,
-                                        PaymentStatus = null,
-                                        FailReasons = null,
-                                        GrossPremium = (premium - (premium * .07)).ToString(),
-                                        VAT = (premium * .07).ToString(),
-                                        StampDuty = null,
-                                        TotalAmount = premium.ToString(),
-                                        BankHolderName = null,
-                                        BankName = null,
-                                        BankNumber = null,
-                                    };
-                                    listPremium.Add(premiumModel);
-                                }
-
-                                var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
-
-                                foreach (var c in customer)
-                                {
-                                    var premiumModel = new Premium();
-                                    //mapster
-                                    customer.Adapt(premiumModel);
-                                }
-                            }
-                        });
-
+                               for (int i = 0; i < coveragePeriods.Count(); i++)
+                               {
+                                   var premiumModel = new Premium
+                                   {
+                                       Product = m.ProductGroupDetail,
+                                       Plan = m.ProductDetail,
+                                       Agent = m.SaleID,
+                                       Branch = m.Branch,
+                                       Telephone = x.Telephone,
+                                       Email = x.Email,
+                                       Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
+                                       PolicyNo = m.PolicyNumber,
+                                       BillingDate = x.BillingDate,
+                                       CollectionDate = x.CollectionDate,
+                                       CoverageDateFrom = coveragePeriods[i].CoveragePeriodStart,
+                                       CoverageDateTo = coveragePeriods[i].CoveragePeriodEnd,
+                                       PremiumType = m.PolicyType,
+                                       PayMode = x.PayMode,
+                                       PaymentStatus = x.CollectionStatus,
+                                       TotalAmount = premium.ToString("0.00"),
+                                       BankHolderName = x.AgentName,
+                                       BankName = x.Bank,
+                                       BankNumber = x.BankAccountNo,
+                                   };
+                                   listPremium.Add(premiumModel);
+                               }
+                               //from customer
+                               var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
+                               foreach (var c in customer)
+                               {
+                                   var premiumModel = new Premium();
+                                   //mapster
+                                   c.Adapt(premiumModel);
+                                   listPremium.Add(premiumModel);
+                               }
+                               // }
+                               //    doneList.Add(x.AgentCode);
+                           }
+                           Console.WriteLine($"Count : {count}");
+                       });
+            _context.BulkInsert(listPremium);
             watch.Stop();
             var end = DateTime.Now;
             var ts = watch.Elapsed;
@@ -200,6 +195,7 @@ namespace ReadExcelFiles
             Console.WriteLine($"Start : {start}");
             Console.WriteLine($"End : {end}");
             Console.WriteLine($"RunTime : {elapsedTime}");
+            Console.WriteLine($"Count Total : {count}");
         }
 
         public int MonthDiff(DateTime start, DateTime end)
@@ -220,6 +216,41 @@ namespace ReadExcelFiles
             return m1 + m2;
         }
 
+
+        public List<CoveragePeriod> CoveragePeriod(DateTime start, DateTime end)
+        {
+            int m1;
+            int m2;
+            int months;
+            var listCoveragePeriod = new List<CoveragePeriod>();
+            if (start < end)
+            {
+                m1 = (end.Month - start.Month);//for years
+                m2 = (end.Year - start.Year) * 12; //for months
+            }
+            else
+            {
+                m1 = (start.Month - end.Month);//for years
+                m2 = (start.Year - end.Year) * 12; //for months
+            }
+
+            months = m1 + m2;
+
+            for (int i = 0; i < months; i++)
+            {
+                var c = new CoveragePeriod
+                {
+
+                    CoveragePeriodStart = start.AddMonths(i),
+                    CoveragePeriodEnd = start.AddMonths(i + 1)
+                };
+
+                listCoveragePeriod.Add(c);
+            }
+
+            return listCoveragePeriod;
+        }
+
         public int PremiumCheck(Double premium)
         {
             var ListPremium = new List<int>() { 588, 1088 };
@@ -228,7 +259,7 @@ namespace ReadExcelFiles
                 var mod = premium % p;
                 if (mod == 0) return p;
             }
-
+            //TODO
             return 0;
         }
     }

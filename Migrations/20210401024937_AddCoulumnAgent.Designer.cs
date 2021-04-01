@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReadExcelFiles.Data;
 
 namespace ReadExcelFiles.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210401024937_AddCoulumnAgent")]
+    partial class AddCoulumnAgent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -761,20 +763,20 @@ namespace ReadExcelFiles.Migrations
                     b.Property<string>("BankNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("BillingDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("BillingDate")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Branch")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CollectionDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("CollectionDate")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CoverageDateFrom")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("CoverageDateFrom")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CoverageDateTo")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("CoverageDateTo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("District")
                         .HasColumnType("nvarchar(max)");
@@ -809,8 +811,8 @@ namespace ReadExcelFiles.Migrations
                     b.Property<string>("Plan")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("PolicyIssueDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("PolicyIssueDate")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PolicyNo")
                         .HasColumnType("nvarchar(max)");
