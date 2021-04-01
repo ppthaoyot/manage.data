@@ -119,7 +119,6 @@ namespace ReadExcelFiles
         {
             var start = DateTime.Now;
             //Declaration
-            var listPremium = new List<Premium>();
             var doneList = new List<string>();
             int count = 0;
             var watch = new Stopwatch();
@@ -127,64 +126,107 @@ namespace ReadExcelFiles
             watch.Start();
             Console.WriteLine($"Start : {DateTime.Now}");
 
-            //Get Data from Motor DB
-            var tmpList = _context.Agent.Take(100).ToList();
+            var listYear = new List<int>() { 2019, 2020, 2021 };
 
-            //loop for check data in done list
-            tmpList.ForEach(x =>
-                       {
-                           //    var checkDone = doneList.Contains(x.AgentCode);
-                           //    if (!checkDone)
-                           //    {
-                           count++;
-                           //from agent
-                           var motor = _context.Motor.Where(m => m.SaleID.Contains(x.AgentCode) && m.PolicyType.Trim() == "New Policy").ToList();
-                           foreach (var m in motor)
-                           {
-                               var coveragePeriods = CoveragePeriod(m.StartDateConvert, m.EndDateConvert);
-                               var premium = PremiumCheck(Convert.ToDouble(m.Premium));
+            for (int i = 0; i < listYear.Count(); i++)
+            {
+                for (int j = 1; j <= 12; j++)
+                {
+                    var listPremium = new List<Premium>();
+                    //Get Data from Motor DB
+                    var tmpList = _context.Agent.Where(o => o.BillingDate.Month == j && o.BillingDate.Year == listYear[i] && o.Amount != 0).ToList();
+                    if (tmpList.Count != 0)
+                    {
+                        //loop for check data in done list
+                        tmpList.ForEach(x =>
+                                       {
+                                           count++;
+                                           //from agent
+                                           var motor = _context.Motor.Where(m => m.SaleID.Contains(x.AgentCode) && m.PolicyType.Trim() == "New Policy").ToList(); //TODO :
+                                           foreach (var m in motor)
+                                           {
+                                               //check data in db premium
+                                               var premiums = _context.Premium.Where(p => p.Agent.Contains(x.AgentCode) && p.PremiumType.Trim() == "New Policy" && p.PolicyNo == m.PolicyNumber).Count();
+                                               if (premiums == 0)
+                                               {
+                                                   var coveragePeriods = CoveragePeriod(m.StartDateConvert, m.EndDateConvert);
+                                                   var premium = PremiumCheck(Convert.ToDouble(m.Premium));
 
-                               for (int i = 0; i < coveragePeriods.Count(); i++)
-                               {
-                                   var premiumModel = new Premium
-                                   {
-                                       Product = m.ProductGroupDetail,
-                                       Plan = m.ProductDetail,
-                                       Agent = m.SaleID,
-                                       Branch = m.Branch,
-                                       Telephone = x.Telephone,
-                                       Email = x.Email,
-                                       Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
-                                       PolicyNo = m.PolicyNumber,
-                                       BillingDate = x.BillingDate,
-                                       CollectionDate = x.CollectionDate,
-                                       CoverageDateFrom = coveragePeriods[i].CoveragePeriodStart,
-                                       CoverageDateTo = coveragePeriods[i].CoveragePeriodEnd,
-                                       PremiumType = m.PolicyType,
-                                       PayMode = x.PayMode,
-                                       PaymentStatus = x.CollectionStatus,
-                                       TotalAmount = premium.ToString("0.00"),
-                                       BankHolderName = x.AgentName,
-                                       BankName = x.Bank,
-                                       BankNumber = x.BankAccountNo,
-                                   };
-                                   listPremium.Add(premiumModel);
-                               }
-                               //from customer
-                               var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
-                               foreach (var c in customer)
-                               {
-                                   var premiumModel = new Premium();
-                                   //mapster
-                                   c.Adapt(premiumModel);
-                                   listPremium.Add(premiumModel);
-                               }
-                               // }
-                               //    doneList.Add(x.AgentCode);
-                           }
-                           Console.WriteLine($"Count : {count}");
-                       });
-            _context.BulkInsert(listPremium);
+                                                   for (int i = 0; i < coveragePeriods.Count(); i++)
+                                                   {
+                                                       var premiumModel = new Premium
+                                                       {
+                                                           Product = m.ProductGroupDetail,
+                                                           Plan = m.ProductDetail,
+                                                           Agent = m.SaleID,
+                                                           Branch = m.Branch,
+                                                           Telephone = x.Telephone,
+                                                           Email = x.Email,
+                                                           Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
+                                                           PolicyNo = m.PolicyNumber,
+                                                           BillingDate = x.BillingDate,
+                                                           CollectionDate = x.CollectionDate,
+                                                           CoverageDateFrom = coveragePeriods[i].CoveragePeriodStart,
+                                                           CoverageDateTo = coveragePeriods[i].CoveragePeriodEnd,
+                                                           PremiumType = m.PolicyType,
+                                                           PayMode = x.PayMode,
+                                                           PaymentStatus = x.CollectionStatus,
+                                                           TotalAmount = premium.ToString("0.00"),
+                                                           BankHolderName = x.AgentName,
+                                                           BankName = x.Bank,
+                                                           BankNumber = x.BankAccountNo,
+                                                       };
+                                                       listPremium.Add(premiumModel);
+                                                   }
+                                                   //from customer
+                                                   var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
+                                                   foreach (var c in customer)
+                                                   {
+                                                       var premiumModel = new Premium();
+                                                       //mapster
+                                                       c.Adapt(premiumModel);
+                                                       listPremium.Add(premiumModel);
+                                                   }
+                                               }
+                                               else
+                                               {
+                                                   //from customer
+                                                   var customer = _context.Customer.Where(c => c.PolicyNo == m.PolicyNumber).ToList();
+                                                   if (customer.Count() > 0)
+                                                   {
+                                                       //from premium
+                                                       var latestCoverage = _context.Premium.Where(o => o.PolicyNo == m.PolicyNumber).OrderByDescending(o => o.CoverageDateFrom).First();
+
+                                                       foreach (var c in customer)
+                                                       {
+                                                           var date1 = Convert.ToDateTime(c.CoverageDateFrom);
+
+                                                           if (date1 > latestCoverage.CoverageDateFrom)
+                                                           {
+                                                               var premiumModel = new Premium();
+                                                               //mapster
+                                                               c.Adapt(premiumModel);
+                                                               listPremium.Add(premiumModel);
+                                                           }
+                                                       }
+                                                   }
+                                               }
+                                           }
+                                           Console.WriteLine($"Count : {count}");
+                                       });
+
+                        using (var transaction = _context.Database.BeginTransaction())
+                        {
+                            //List greater than 0  => bulkInsert
+                            if (listPremium.Count > 0)
+                            {
+                                _context.BulkInsert(listPremium);
+                            }
+                            transaction.Commit();
+                        }
+                    }
+                }
+            }
             watch.Stop();
             var end = DateTime.Now;
             var ts = watch.Elapsed;
@@ -251,7 +293,7 @@ namespace ReadExcelFiles
             return listCoveragePeriod;
         }
 
-        public int PremiumCheck(Double premium)
+        public Double PremiumCheck(Double premium)
         {
             var ListPremium = new List<int>() { 588, 1088 };
             foreach (var p in ListPremium)
@@ -260,7 +302,7 @@ namespace ReadExcelFiles
                 if (mod == 0) return p;
             }
             //TODO
-            return 0;
+            return premium;
         }
     }
 }
