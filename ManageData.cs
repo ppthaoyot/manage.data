@@ -57,6 +57,9 @@ namespace ReadExcelFiles
                         var sale = tmpResult.SaleID.Split("-");
                         motor.SaleID = sale[0].Trim();
                         motor.SaleName = sale[1].Trim();
+                        motor.CoveragePeriodStart = tmpResult.PolicyStartDate;
+                        motor.StartDateConvert = tmpResult.PolicyStartDateConvert;
+                        motor.Premium = Premium(Convert.ToDouble(tmpResult.Premium)).ToString();
                         //assign latest update
                         motor.LatestUpdate = DateTime.Now;
                         //Add to list
@@ -70,9 +73,7 @@ namespace ReadExcelFiles
                         {
                             var update = motorResult;
 
-                            update.CoveragePeriodStart = tmpResult.CoveragePeriodStart;
                             update.CoveragePeriodEnd = tmpResult.CoveragePeriodEnd;
-                            update.StartDateConvert = tmpResult.StartDateConvert;
                             update.EndDateConvert = tmpResult.EndDateConvert;
                             update.LatestUpdate = DateTime.Now;
                             //Add to list
@@ -126,11 +127,12 @@ namespace ReadExcelFiles
             watch.Start();
             Console.WriteLine($"Start : {DateTime.Now}");
 
-            var initial = true;
+            var initial = _context.Premium.Count(); ;
             var now = DateTime.Now;
             var listYears = new List<int>() { 2019, 2020, 2021 };
 
-            if (initial)
+            Console.WriteLine($"Premium Count : {initial}");
+            if (initial == 0)
             {
                 foreach (var y in listYears)
                 {
@@ -176,8 +178,8 @@ namespace ReadExcelFiles
                                        foreach (var m in motor)
                                        {
                                            var premium = Premium(Convert.ToDouble(m.Premium));
-                                           int months = (m.ProductDetail.Trim() == "M3+" ? 1 : MonthDiff(m.StartDateConvert, m.EndDateConvert));
-                                           var coverageDateFrom = m.StartDateConvert;
+                                           int months = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? 1 : 2); //M3+ รายปี 1 งวด ,อื่นๆ new policy จะเก็บ 2 งวด
+                                           var coverageDateFrom = m.PolicyStartDateConvert;
                                            for (int i = 0; i < months; i++)
                                            {
                                                var premiumModel = new Premium
@@ -192,8 +194,8 @@ namespace ReadExcelFiles
                                                    PolicyNo = m.PolicyNumber,
                                                    BillingDate = x.BillingDate,
                                                    CollectionDate = x.CollectionDate,
-                                                   CoverageDateFrom = (m.ProductDetail.Trim() == "M3+" ? m.StartDateConvert : coverageDateFrom.AddMonths(i)),
-                                                   CoverageDateTo = (m.ProductDetail.Trim() == "M3+" ? m.EndDateConvert : coverageDateFrom.AddMonths(i + 1)),
+                                                   CoverageDateFrom = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? m.StartDateConvert : coverageDateFrom.AddMonths(i)),
+                                                   CoverageDateTo = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? m.EndDateConvert : coverageDateFrom.AddMonths(i + 1)),
                                                    PremiumType = "New Policy",
                                                    PayMode = x.PayMode,
                                                    PaymentStatus = x.CollectionStatus,
