@@ -161,7 +161,6 @@ namespace ReadExcelFiles
             Console.WriteLine($"Total : {total}");
 
         }
-
         public int DataToPremium(int year, int? month = null)
         {
             int countTotal = 0;
