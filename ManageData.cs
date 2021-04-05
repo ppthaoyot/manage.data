@@ -129,19 +129,25 @@ namespace ReadExcelFiles
 
             var initial = _context.Premium.Count(); ;
             var now = DateTime.Now;
-            var listYears = new List<int>() { 2019, 2020, 2021 };
+            var listYears = new List<int>() { 2019, 2020 };
 
             Console.WriteLine($"Premium Count : {initial}");
+
+            //data in premium equal 0
             if (initial == 0)
             {
                 foreach (var y in listYears)
                 {
-                    total += DataToPremium(y);
+                    //initial insert  
+                    total += DataToPremiumInitial(y);
                 }
+                //insert current year
+                total += DataToPremium(now.Year);
             }
             else
             {
-                total += DataToPremium(now.Year);
+                //insert current year
+                total += DataToPremium(now.Year, now.Month);
             }
 
             watch.Stop();
@@ -158,27 +164,91 @@ namespace ReadExcelFiles
 
         }
 
-        public int DataToPremium(int year)
+        public int DataToPremiumInitial(int year)
         {
             int countTotal = 0;
+            var now = DateTime.Now;
+            //Check  if thismonth
             for (int j = 1; j <= 12; j++)
             {
                 int count = 0;
                 var listPremium = new List<Premium>();
                 //Get Data from Motor DB
-                var tmpList = _context.Agent.Where(o => o.BillingDate.Month == j && o.BillingDate.Year == year && o.Amount != 0).ToList();
+                var motor = new List<DBMotor>();
+                motor = _context.DBMotor.Where(m => m.PolicyStartDateConvert.Month == j && m.PolicyStartDateConvert.Year == year).ToList();
+
+                foreach (var m in motor)
+                {
+                    count++;
+                    var premium = Premium(Convert.ToDouble(m.Premium));
+                    var agent = _context.Agent.Where(o => o.AgentCode == m.SaleID).FirstOrDefault();
+                    int months = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? 1 : (m.ProductDetail.Trim() == "M2+ Special Yearly") ? 12 : 2); //M3+ รายปี 1 งวด ,อื่นๆ new policy จะเก็บ 2 งวด
+                    var coverageDateFrom = m.PolicyStartDateConvert;
+                    for (int i = 0; i < months; i++)
+                    {
+                        var premiumModel = new Premium
+                        {
+                            Product = m.ProductGroupDetail,
+                            Plan = m.ProductDetail,
+                            Agent = $"{m.SaleID} - {m.SaleName}",
+                            Branch = m.Branch,
+                            Telephone = (agent != null ? agent.Telephone : null),
+                            Email = (agent != null ? agent.Email : null),
+                            Insuredname = $"{m.InsuredFirstName} {m.InsuredLastName}",
+                            PolicyNo = m.PolicyNumber,
+                            CoverageDateFrom = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? m.StartDateConvert : coverageDateFrom.AddMonths(i)),
+                            CoverageDateTo = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? m.EndDateConvert : coverageDateFrom.AddMonths(i + 1)),
+                            PremiumType = "New Policy",
+                            TotalAmount = premium.ToString("0.00"),
+                            BankHolderName = m.SaleName,
+                            BankName = (agent != null ? agent.Bank : null),
+                            BankNumber = (agent != null ? agent.BankAccountNo : null),
+                        };
+                        listPremium.Add(premiumModel);
+                    }
+                }
+                Console.WriteLine($"Count : {count}");
+
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    //List greater than 0  => bulkInsert
+                    countTotal += listPremium.Count();
+                    if (countTotal > 0)
+                    {
+                        _context.BulkInsert(listPremium);
+                    }
+                    transaction.Commit();
+                }
+            }
+            return countTotal;
+        }
+
+        public int DataToPremium(int year, int? month = null)
+        {
+            int countTotal = 0;
+            var now = DateTime.Now;
+            var thisMonth = (month != null);
+            //Check  if thismonth 
+            for (int j = 1; j <= (thisMonth ? 1 : now.Month); j++)
+            {
+                int count = 0;
+                var listPremium = new List<Premium>();
+                //Get Data from Motor DB
+                var tmpList = _context.Agent.Where(o => o.BillingDate.Month == (thisMonth ? month : j) && o.BillingDate.Year == year && o.Amount != 0).ToList();
                 if (tmpList.Count != 0)
                 {
                     //loop for check data in done list
                     tmpList.ForEach(x =>
                                    {
                                        count++;
-                                       //from agent                                       
-                                       var motor = _context.DBMotor.Where(m => m.SaleID == x.AgentCode && m.PolicyStartDateConvert == x.BillingDate).ToList();
+                                       //from agent
+                                       var motor = new List<DBMotor>();
+                                       motor = _context.DBMotor.Where(m => m.SaleID == x.AgentCode && m.PolicyStartDateConvert == x.BillingDate).ToList();
+
                                        foreach (var m in motor)
                                        {
                                            var premium = Premium(Convert.ToDouble(m.Premium));
-                                           int months = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? 1 : 2); //M3+ รายปี 1 งวด ,อื่นๆ new policy จะเก็บ 2 งวด
+                                           int months = ((m.ProductDetail.Trim() == "M3+" || m.ProductGroupDetail.Trim() == "ภาคบังคับ") ? 1 : (m.ProductDetail.Trim() == "M2+ Special Yearly") ? 12 : 2); //M3+ รายปี 1 งวด ,อื่นๆ new policy จะเก็บ 2 งวด
                                            var coverageDateFrom = m.PolicyStartDateConvert;
                                            for (int i = 0; i < months; i++)
                                            {
@@ -248,7 +318,7 @@ namespace ReadExcelFiles
         {
             if (premium == 0) return premium;
 
-            var ListPremium = new List<int>() { 588, 1088, 2088 };
+            var ListPremium = new List<int>() { 588, 1088, 2088, 6500 };
             foreach (var p in ListPremium)
             {
                 var mod = premium % p;
