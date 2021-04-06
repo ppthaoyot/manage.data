@@ -31,7 +31,7 @@ namespace ReadExcelFiles
             optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             AppDBContext _dBContext = new AppDBContext(optionsBuilder.Options);
 
-            //new ManageData(_dBContext).ToDBPolicy();
+            new ManageData(_dBContext).ToDBPolicy();
             new ManageData(_dBContext).ToDBPremium();
         }
 

@@ -62,6 +62,7 @@ namespace ReadExcelFiles
                         motor.Premium = Premium(Convert.ToDouble(tmpResult.Premium)).ToString();
                         //TEST
                         motor.PolicyStartDateConvert2 = tmpResult.PolicyStartDateConvert;
+                        motor.CreatedDateConvert = Convert.ToDateTime(tmpResult.CreatedDate);
                         //assign latest update
                         motor.LatestUpdate = DateTime.Now;
                         //Add to list
@@ -170,13 +171,13 @@ namespace ReadExcelFiles
             int countTotal = 0;
             var now = DateTime.Now;
 
-            for (int j = 1; j <= 12; j++)
+            for (int j = 1; j <= (month != null ? 1 : 12); j++)
             {
                 int count = 0;
                 var listPremium = new List<Premium>();
                 //Get Data from Motor DB
                 var motor = new List<DBMotor>();
-                motor = _context.DBMotor.Where(m => m.PolicyStartDateConvert2.Value.Month == j && m.PolicyStartDateConvert2.Value.Year == year && m.MotorApplicationStatusDetail.Trim() == "ออกกรมธรรม์").ToList();
+                motor = _context.DBMotor.Where(m => m.CreatedDateConvert.Month == (month != null ? month : j) && m.CreatedDateConvert.Year == year).ToList();
 
 
                 foreach (var m in motor)

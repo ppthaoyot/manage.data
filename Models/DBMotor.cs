@@ -84,6 +84,7 @@ namespace ReadExcelFiles.Models
         public string CancelledByEmployeeCode { get; set; }
         public string CancelledDate { get; set; }
         public string CancelledReason { get; set; }
+        public DateTime CreatedDateConvert { get; set; }
         public DateTime StartDateConvert { get; set; }
         public DateTime PolicyStartDateConvert { get; set; }
         public DateTime? PolicyStartDateConvert2 { get; set; }
