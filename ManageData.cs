@@ -60,6 +60,8 @@ namespace ReadExcelFiles
                         motor.CoveragePeriodStart = tmpResult.PolicyStartDate;
                         motor.StartDateConvert = tmpResult.PolicyStartDateConvert;
                         motor.Premium = Premium(Convert.ToDouble(tmpResult.Premium)).ToString();
+                        //TEST
+                        motor.PolicyStartDateConvert2 = tmpResult.PolicyStartDateConvert;
                         //assign latest update
                         motor.LatestUpdate = DateTime.Now;
                         //Add to list
@@ -76,6 +78,8 @@ namespace ReadExcelFiles
                             update.CoveragePeriodEnd = tmpResult.CoveragePeriodEnd;
                             update.EndDateConvert = tmpResult.EndDateConvert;
                             update.LatestUpdate = DateTime.Now;
+                            //TEST
+                            update.PolicyStartDateConvert2 = tmpResult.PolicyStartDateConvert;
                             //Add to list
                             listDBMotorUpdate.Add(update);
                         }
@@ -172,7 +176,7 @@ namespace ReadExcelFiles
                 var listPremium = new List<Premium>();
                 //Get Data from Motor DB
                 var motor = new List<DBMotor>();
-                motor = _context.DBMotor.Where(m => m.PolicyStartDateConvert.Month == j && m.PolicyStartDateConvert.Year == year && m.MotorApplicationStatusDetail.Trim() == "ออกกรมธรรม์").ToList();
+                motor = _context.DBMotor.Where(m => m.PolicyStartDateConvert2.Value.Month == j && m.PolicyStartDateConvert2.Value.Year == year && m.MotorApplicationStatusDetail.Trim() == "ออกกรมธรรม์").ToList();
 
 
                 foreach (var m in motor)
